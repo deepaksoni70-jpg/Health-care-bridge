@@ -1,0 +1,49 @@
+
+
+services:
+  healthcarebridge:
+    build: .
+    ports:
+      - "80:8081"
+    env_file:
+        - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+
+    restart: on-failure
+
+  postgres:
+    image: postgis/postgis:17-3.5
+    restart: always
+    env_file:
+        - .env
+    environment:
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_database_storage:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      retries: 6
+      timeout: 5s
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  pg_database_storage:
